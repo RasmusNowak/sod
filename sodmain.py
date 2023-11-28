@@ -13,9 +13,23 @@ app.config.suppress_callback_exceptions = True
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div([
-        html.Button([html.Img(src='https://i.ebayimg.com/images/g/vOYAAOSwfDxfAvrn/s-l400.jpg', style={'height': '20px', 'width': '20px'}), " Player Statistics"], 
-                    id="btn-player-stats", 
-                    style={'display': 'flex', 'align-items': 'center', 'border-radius': '50%', 'margin': '5px', 'padding': '10px 20px'}),
+        html.Button(id="btn-player-stats", style={
+        'background-image': 'url(https://i.ebayimg.com/images/g/vOYAAOSwfDxfAvrn/s-l400.jpg)',
+        'background-size': 'cover',
+        'background-position': 'center',  # Ensure the image is centered
+        'border-radius': '50%',
+        'height': '75px',  # Adjust size as needed
+        'width': '75px',   # Adjust size as needed
+        'border': 'none',  # Remove border
+        'padding': '0',    # Remove padding
+        'cursor': 'pointer', # Change cursor on hover
+        'outline': 'none', # Remove outline
+        'align-items': 'center',
+        'justify-content': 'center',
+        'display': 'flex',
+    }
+)
+,
         html.Button([html.Img(src='your-icon-url-here', style={'height': '20px', 'width': '20px'}), " Blackfathom Deeps Statistics"], 
                     id="btn-bfd-stats", 
                     style={'display': 'flex', 'align-items': 'center', 'border-radius': '50%', 'margin': '5px', 'padding': '10px 20px'}),
@@ -25,9 +39,9 @@ app.layout = html.Div([
         html.Button([html.Img(src='your-icon-url-here', style={'height': '20px', 'width': '20px'}), " Talent Statistics"], 
                     id="btn-talent-stats", 
                     style={'display': 'flex', 'align-items': 'center', 'border-radius': '50%', 'margin': '5px', 'padding': '10px 20px'})
-    ], style={'display': 'flex', 'justify-content': 'center', 'background-color': '#f0f0f0'}),  # Background color for the button container
+    ], style={'display': 'flex', 'justify-content': 'center', 'background-color': '#000000'}),  # Set the button container background to black
     html.Div(id='page-content')
-])  # Background color for the entire app
+], style={'background-color': '#000000', 'height': '100vh', 'color': 'white'})  # Set the overall app background to black
 
 # Callbacks to navigate to different pages
 @app.callback(Output('url', 'pathname'),
