@@ -6,6 +6,14 @@ from dash.exceptions import PreventUpdate
 import pandas as pd
 from piechart_bfd import prepare_pie_chart_data
 import plotly.graph_objects as go
+from bubblegraph_v1 import create_bubble_chart, load_datasets, color_map
+
+folder_path = r'C:\Users\rasmu\Desktop\sod\Data\statistics_bfd\dps'
+datasets, available_datasets = load_datasets(folder_path)
+
+# Load Tank datasets
+tank_folder_path = r'C:\Users\rasmu\Desktop\sod\Data\statistics_bfd\tanks'
+tank_datasets = load_datasets(tank_folder_path)
 
 # Initialize the Dash app
 app = dash.Dash(__name__, suppress_callback_exceptions=True)
@@ -107,39 +115,43 @@ def navigate(n1, n2, n3, n4):
     raise PreventUpdate
 
 def render_page_content(pathname):
-    if pathname == '/player-statistics':
-        # Define layout for Player Statistics
-        return html.Div([html.H1('Player Statistics')], style={'backgroundColor': '#000000', 'height': '100vh', 'color': 'white'})
-    
-    elif pathname == '/blackfathom-deeps-statistics':
+    if pathname == '/blackfathom-deeps-statistics':
         df_combined = prepare_pie_chart_data()
-        fig = go.Figure(data=[go.Pie(labels=df_combined['Class'], 
-                                     values=df_combined['Parses'],
-                                     # Make a title for the chart called Class destribution, white text, size 24
-                                        title='Class distribution',
-                                        titlefont_size=24,
-                                        # change title text color to white
-                                        titlefont_color='white',
-                                     marker=dict(colors=df_combined['Color'],
-                                                 line=dict(color='#000000', width=2)))])
-        fig.update_traces(hoverinfo='label+value', textinfo='percent', textfont_size=10)
-        
-            # Update layout to set background colors
-        fig.update_layout({
-            'paper_bgcolor': 'rgba(0,0,0,1)',  # This sets the surrounding area to black
-            'plot_bgcolor': 'rgba(0,0,0,1)',   # This sets the plot background area to black
-            'margin': go.layout.Margin(
-                l=0,  # left margin
-                r=0,  # right margin
-                b=0,  # bottom margin
-                t=0,  # top margin
-            )
+        pie_fig = go.Figure(data=[go.Pie(labels=df_combined['Class'], 
+                                         values=df_combined['Parses'],
+                                         title='Class distribution',
+                                         titlefont_size=24,
+                                         titlefont_color='white',
+                                         marker=dict(colors=df_combined['Color'],
+                                                     line=dict(color='#000000', width=2)))])
+        pie_fig.update_traces(hoverinfo='label+value', textinfo='percent', textfont_size=10)
+        pie_fig.update_layout({
+            'paper_bgcolor': 'rgba(0,0,0,1)',
+            'plot_bgcolor': 'rgba(0,0,0,1)',
+            'margin': go.layout.Margin(l=0, r=0, b=0, t=0)
         })
+
+        # Button for changing DPS datasets
+        dps_dataset_button = html.Button('Next DPS Dataset', id='next-dataset-btn', n_clicks=0)
+
+        # DPS bubble chart graph
+        dps_bubble_chart = dcc.Graph(id='bubble-chart')
+
+        # Button for changing Tank datasets
+        tank_dataset_button = html.Button('Next Tank Dataset', id='next-tank-dataset-btn', n_clicks=0)
+
+        # Tank bubble chart graph
+        tank_bubble_chart = dcc.Graph(id='tank-bubble-chart')
+
+        # Create a container to hold the charts and the buttons
         return html.Div([
             html.H1('Blackfathom Deeps Statistics'),
-            dcc.Graph(figure=fig)
+            html.Div(dcc.Graph(figure=pie_fig), style={'width': '100%', 'display': 'block'}),
+            html.Div([dps_dataset_button, tank_dataset_button], style={'display': 'flex', 'justify-content': 'center'}),
+            html.Div(dps_bubble_chart, style={'width': '100%', 'display': 'block'}),
+            html.Div(tank_bubble_chart, style={'width': '100%', 'display': 'block'})
         ], style={'backgroundColor': '#000000', 'height': '100vh', 'color': 'white'})
-
+    
     elif pathname == '/pvp-statistics':
         # Define layout for Player vs Player Statistics
         return html.Div([html.H1('PvP Statistics')], style={'backgroundColor': '#000000', 'height': '100vh', 'color': 'white'})
@@ -193,6 +205,41 @@ def update_talent_table(selected_class):
 
     return html.Table([table_header, table_body])
 
+@app.callback(
+    Output('bubble-chart', 'figure'),
+    [Input('next-dataset-btn', 'n_clicks')]
+)
+def update_bubble_chart(n_clicks):
+    # Ensure n_clicks is initialized
+    if n_clicks is None:
+        n_clicks = 0
+
+    dataset_index = n_clicks % len(available_datasets)
+    dataset_filename = f'{available_datasets[dataset_index]}.csv'
+
+    if dataset_filename in datasets:
+        return create_bubble_chart(datasets[dataset_filename], color_map)
+    else:
+        print(f"Dataset {dataset_filename} not found.")
+        return go.Figure()
+
+# Callback for updating the Tank bubble chart
+@app.callback(
+    Output('tank-bubble-chart', 'figure'),
+    [Input('next-tank-dataset-btn', 'n_clicks')]
+)
+
+def update_tank_bubble_chart(n_clicks):
+    dataset_index = n_clicks % len(available_datasets)
+    dataset_date = available_datasets[dataset_index]
+    dataset_filename = f'bfd_data_tanks_{dataset_date}.csv'
+
+    if dataset_filename in tank_datasets:
+        return create_bubble_chart(tank_datasets[dataset_filename])
+    else:
+        print(f"Dataset {dataset_filename} not found.")
+        return go.Figure()
+        
 # Update the page content based on the URL
 @app.callback(Output('page-content', 'children'),
               [Input('url', 'pathname')])
